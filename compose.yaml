@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  web:
+    depends_on:
+      - api
+
+    build: ./frontend
+    ports:
+      - 5173:5173
+    environment:
+      VITE_API_URL: http://api:3000
+
+    develop:
+      watch:
+        - action: sync
+          path: ./web
+          target: /src/web
+        - action: rebuild
+          path: package.json
+        - action: rebuild
+          path: package-lock.json
+
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # Ensure node_modules is not overwritten by the host
+
+  api:
+    depends_on:
+      - db
+
+    build: ./backend
+    ports:
+      - 3000:3000
+    environment:
+      DB_URL: mongodb://db/imagigen
+
+    develop:
+      watch:
+        - action: sync
+          path: ./api
+          target: /
+        - action: rebuild
+          path: package.json
+        - action: rebuild
+          path: package-lock.json
+    volumes:
+      - ./backend:/app
+
+  db:
+    image: mongo:latest
+    ports:
+      - 27017:27017
+    volumes:
+      - imagigen:/data/db
+
+volumes:
+  imagigen:
